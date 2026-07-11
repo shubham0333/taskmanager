@@ -15,20 +15,27 @@ const Login = () => {
         setLoading(true)
 
         try {
-            const endpoint = isRegister ? '/users/register' : ENDPOINTS.LOGIN()
-            const response = await instance.post(endpoint, { username, password })
+            const endpoint = isRegister ? ENDPOINTS.REGISTER() : ENDPOINTS.LOGIN()
+            const response = await instance.post(
+                endpoint,
+                { username: username.trim(), password },
+                { skipAuthRedirect: true },
+            )
 
             if (isRegister) {
                 toast.success('Registration successful. Please login now.')
                 setIsRegister(false)
                 setPassword('')
             } else {
+                if (!response.data?.access_token) {
+                    throw new Error('The server did not return an access token.')
+                }
                 localStorage.setItem('token', response.data.access_token)
                 toast.success('Login successful')
                 navigate('/tasks')
             }
         } catch (err) {
-            const message = err?.response?.data?.detail || err?.response?.data?.message || 'Request failed'
+            const message = err?.response?.data?.detail || err?.message || 'Request failed'
             toast.error(message)
         } finally {
             setLoading(false)

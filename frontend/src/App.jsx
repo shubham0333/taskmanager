@@ -21,6 +21,7 @@ export const App = () => {
     <Routes>
       <Route path="/" element={<Login/>}></Route>
       <Route path="/tasks" element={<ProtectedRoute><Navbar/><Task/></ProtectedRoute>}></Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
    </BrowserRouter>
 

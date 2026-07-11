@@ -17,9 +17,11 @@ def verify_password(password: str, hashed_password: str):
     return pwd_context.verify(password, hashed_password)
 
 
-def create_access_token(data: dict, expires_delta: int):
+def create_access_token(data: dict, expires_delta: int | None = None):
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=expires_delta)
+    expire = datetime.utcnow() + timedelta(
+        minutes=expires_delta or settings.access_token_expire_minutes
+    )
     to_encode.update({"exp": expire})
 
     return jwt.encode(

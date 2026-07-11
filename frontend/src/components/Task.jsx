@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Check, Pencil, Trash, Save } from "lucide-react";
 import { ENDPOINTS, instance } from "./api";
 import { toast } from "react-toastify";
@@ -7,6 +7,12 @@ const Task = () => {
   const [tasks, setTasks] = useState([]);
   const [editable, setEditable] = useState(null);
   const [inputTask, setInputTask] = useState("");
+
+  const normalizeTasks = (payload) => {
+    if (Array.isArray(payload)) return payload;
+    if (payload && Array.isArray(payload.tasks)) return payload.tasks;
+    return [];
+  };
 
   // Edit task title
   const editTask = (e, id) => {
@@ -34,7 +40,7 @@ const Task = () => {
       setEditable(null);
       getAllTasks();
     } catch (err) {
-      console.log(err);
+      toast.error(err?.response?.data?.detail || "Could not update the task");
     }
   };
 
@@ -54,7 +60,7 @@ const Task = () => {
       toast.success("Task updated successfully");
       getAllTasks();
     } catch (err) {
-      console.log(err);
+      toast.error(err?.response?.data?.detail || "Could not update the task");
     }
   };
 
@@ -72,24 +78,22 @@ const Task = () => {
       setInputTask("");
       getAllTasks();
     } catch (err) {
-      console.log(err);
+      toast.error(err?.response?.data?.detail || "Could not create the task");
     }
   };
 
   // Fetch tasks
-  const getAllTasks = async () => {
-  try {
-    const res = await instance.get(ENDPOINTS.GET_TASK());
-
-    console.log("API Response:", res.data);
-    console.log("Is Array:", Array.isArray(res.data));
-
-    setTasks(Array.isArray(res.data) ? res.data : []);
-  } catch (err) {
-    console.log(err);
-    setTasks([]);
-  }
-};
+  const getAllTasks = useCallback(async () => {
+    try {
+      const res = await instance.get(ENDPOINTS.GET_TASK());
+      setTasks(normalizeTasks(res.data));
+    } catch (err) {
+      if (err.response?.status !== 401) {
+        toast.error(err?.response?.data?.detail || "Could not load tasks");
+      }
+      setTasks([]);
+    }
+  }, []);
 
   // Delete task
   const deleteTask = async (id) => {
@@ -99,13 +103,13 @@ const Task = () => {
       toast.success("Task deleted successfully");
       getAllTasks();
     } catch (err) {
-      console.log(err);
+      toast.error(err?.response?.data?.detail || "Could not delete the task");
     }
   };
 
   useEffect(() => {
     getAllTasks();
-  }, []);
+  }, [getAllTasks]);
 
   return (
     <>

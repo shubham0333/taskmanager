@@ -1,13 +1,10 @@
-from fastapi import APIRouter, FastAPI,Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from src.database import get_db
 from src.schemas import UserCreate 
 from src.model.user import User
 from src.security import auth
-from fastapi import HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
 from fastapi.security import OAuth2PasswordRequestForm
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="users/token")
 router =APIRouter(prefix="/users", tags=["users"])
 
 @router.post("/register")
@@ -16,7 +13,10 @@ def create_user(user: UserCreate, db=Depends(get_db)):
     existing_user = db.query(User).filter(User.username == user.username).first()
 
     if existing_user:
-        return {"message": "Username already exists"}
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Username already exists",
+        )
 
     new_user = User(username=user.username, password=auth.hash_password(user.password))
     db.add(new_user)
@@ -31,11 +31,17 @@ def login_user(user: UserCreate, db=Depends(get_db)):
     existing_user = db.query(User).filter(User.username == user.username).first()
 
     if not existing_user:
-        return {"message": "Invalid username"}
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid username or password",
+        )
 
     if not auth.verify_password(user.password, existing_user.password):
-        return {"message": "Invalid password"}
-    access_token = auth.create_access_token(data={"sub": existing_user.username}, expires_delta=30)    
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid username or password",
+        )
+    access_token = auth.create_access_token(data={"sub": existing_user.username})
     return {
         "access_token": access_token,
         "token_type": "bearer"
@@ -58,7 +64,7 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db=
             detail="Invalid password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token = auth.create_access_token(data={"sub": existing_user.username}, expires_delta=30)
+    access_token = auth.create_access_token(data={"sub": existing_user.username})
     return {
         "access_token": access_token,
         "token_type": "bearer"
@@ -76,7 +82,17 @@ def verify_token(token: str):
 def get_current_user(token: str = Depends(auth.oauth2_scheme), db=Depends(get_db)):
     username = verify_token(token)
     if username is None:
-        return None
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     user = db.query(User).filter(User.username == username).first()
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User no longer exists",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     return user
 

@@ -1,0 +1,13 @@
+# Secrets and local-only configuration
+.env
+frontend/.env
+backend/.env
+
+# Python
+backend/.venv/
+**/__pycache__/
+*.py[cod]
+
+# JavaScript
+frontend/node_modules/
+frontend/dist/
