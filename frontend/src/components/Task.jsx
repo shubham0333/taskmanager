@@ -78,21 +78,18 @@ const Task = () => {
 
   // Fetch tasks
   const getAllTasks = async () => {
-    try {
-      const res = await instance.get(ENDPOINTS.GET_TASK());
+  try {
+    const res = await instance.get(ENDPOINTS.GET_TASK());
 
-      console.log(res.data);
+    console.log("API Response:", res.data);
+    console.log("Is Array:", Array.isArray(res.data));
 
-      if (Array.isArray(res.data)) {
-        setTasks(res.data);
-      } else {
-        setTasks([]);
-      }
-    } catch (err) {
-      console.log(err);
-      setTasks([]);
-    }
-  };
+    setTasks(Array.isArray(res.data) ? res.data : []);
+  } catch (err) {
+    console.log(err);
+    setTasks([]);
+  }
+};
 
   // Delete task
   const deleteTask = async (id) => {

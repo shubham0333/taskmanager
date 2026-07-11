@@ -15,7 +15,7 @@ export const ENDPOINTS = {
 }
 
 export const instance = axios.create({
-    baseURL: "https://taskmanager-t74i.onrender.com/"
+    baseURL: "https://taskmanager-t74i.onrender.com"
 });
 instance.interceptors.request.use(config=>{
    const token = localStorage.getItem("token")
