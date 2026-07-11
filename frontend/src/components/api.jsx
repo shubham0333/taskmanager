@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { toast } from 'react-toastify'
 
+
 export const ENDPOINTS = {
     LOGIN: () => "/users/login",
 
@@ -14,9 +15,8 @@ export const ENDPOINTS = {
 }
 
 export const instance = axios.create({
-    baseURL:"http://127.0.0.1:8000/"
-})
-
+    baseURL: "https://taskmanager-t74i.onrender.com/"
+});
 instance.interceptors.request.use(config=>{
    const token = localStorage.getItem("token")
    if(token)
